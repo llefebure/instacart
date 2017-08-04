@@ -21,23 +21,34 @@ def _collapse(x):
     else:
         return " ".join(map(str, product_list))
 
-def binaryPredictionToString(X, preds, thr, dynamic = False):
+def binaryPredictionToString(X, preds, thr, dynamic = False, basket = False):
     mat = X[["order_id", "product_id"]]
-    if not dynamic:
-        mat = mat.assign(products = map(lambda (pid, pr): "" if pr < thr else pid,
-                                        zip(mat.product_id, preds)))
-        preds_str = mat.groupby("order_id").agg({
-            "products": _collapse
-        })
-        return preds_str
-    else:
+
+    if dynamic:
         mat = mat.assign(products = map(lambda (pid, pr, thr_v): "" if pr < thr_v else pid,
                                         zip(mat.product_id, preds, thr)))
         preds_str = mat.groupby("order_id").agg({
             "products": _collapse
         })
         return preds_str
-
+    elif basket:
+        mat = mat.assign(pred = preds, sz = thr).sort_values(by = "pred", ascending = False)
+        mat["index_within_group"] = mat.groupby("order_id").cumcount() + 1
+        mat = mat.assign(products = map(lambda (sz, ix, pid): "" if ix > sz else pid,
+                                        zip(mat.sz, mat.index_within_group, mat.product_id)))
+        preds_str = mat.groupby("order_id").agg({
+            "products": _collapse
+        })
+        return preds_str
+    else:
+        mat = mat.assign(products = map(lambda (pid, pr): "" if pr < thr else pid,
+                                        zip(mat.product_id, preds)))
+        preds_str = mat.groupby("order_id").agg({
+            "products": _collapse
+        })
+        return preds_str
+    
+    
 def evaluate(X, y, preds, thr = np.linspace(.18, .22, 8), dynamic = False):
     truth_str = binaryPredictionToString(X, y, .5)
     rv = dict()

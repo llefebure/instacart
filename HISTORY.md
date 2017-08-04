@@ -31,3 +31,15 @@ Next I want to create a dynamic threshold for my classifier. I see two ways of d
 | LB | .3829204 |
 
 For these I tested various threshold prediction methods. For the training predictions, a calculated the threshold for each user that would've produced the best f1. I trained a model on these thresholds, and then used it to predict the best threshold for each user in the test set. The submissions were different versions of this dynamic threshold: the first used the predicted threshold as is and the rest shrunk it towards the best global threshold of .19 according to (thr + n*.19)/ (n+1) for n = 1, 2, 3. The variant with n=2 produced the best score and an improvement over the global threshold, but it was very small.
+
+### Submission 8
+| Data | Score |
+| LB | 0.3831298 |
+
+I added a few additional features related to the user's most recent order and used the same threshold shrinkage approach as above.
+
+### Submission 9
+| Data | Score |
+| LB | 0.3615980 |
+
+This was an initial attempt at building a regression model for predicting the size of the next order. My model would predict the number of reorders per user, say N, and then choose the top N products for that user ranked by probability.
